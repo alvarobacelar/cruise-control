@@ -6,8 +6,6 @@
 *.iml
 *.ipr
 *.iws
-/build
-*/build
 out/
 */bin/
 .reviewboardrc

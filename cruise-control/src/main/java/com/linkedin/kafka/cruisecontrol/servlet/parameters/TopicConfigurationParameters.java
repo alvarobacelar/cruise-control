@@ -4,7 +4,6 @@
 
 package com.linkedin.kafka.cruisecontrol.servlet.parameters;
 
-import com.linkedin.kafka.cruisecontrol.config.constants.ExecutorConfig;
 import com.linkedin.kafka.cruisecontrol.config.constants.WebServerConfig;
 import com.linkedin.kafka.cruisecontrol.servlet.CruiseControlEndPoint;
 import com.linkedin.kafka.cruisecontrol.servlet.UserRequestException;
@@ -16,9 +15,6 @@ import java.util.TreeSet;
 
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.areAllParametersNull;
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.REVIEW_ID_PARAM;
-import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.DRY_RUN_PARAM;
-import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.STOP_ONGOING_EXECUTION_PARAM;
-import static com.linkedin.kafka.cruisecontrol.servlet.parameters.ParameterUtils.REASON_PARAM;
 import static com.linkedin.kafka.cruisecontrol.servlet.parameters.TopicReplicationFactorChangeParameters.maybeBuildTopicReplicationFactorChangeParameters;
 
 
@@ -55,22 +51,16 @@ import static com.linkedin.kafka.cruisecontrol.servlet.parameters.TopicReplicati
  *    &amp;stop_ongoing_execution=[true/false]&amp;get_response_schema=[true/false]
  * </pre>
  */
-public class TopicConfigurationParameters extends GoalBasedOptimizationParameters {
+public class TopicConfigurationParameters extends AbstractParameters {
   protected static final SortedSet<String> CASE_INSENSITIVE_PARAMETER_NAMES;
   static {
     SortedSet<String> validParameterNames = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
     validParameterNames.add(REVIEW_ID_PARAM);
-    validParameterNames.add(DRY_RUN_PARAM);
-    validParameterNames.add(STOP_ONGOING_EXECUTION_PARAM);
-    validParameterNames.add(REASON_PARAM);
     validParameterNames.addAll(TopicReplicationFactorChangeParameters.CASE_INSENSITIVE_PARAMETER_NAMES);
-    validParameterNames.addAll(GoalBasedOptimizationParameters.CASE_INSENSITIVE_PARAMETER_NAMES);
+    validParameterNames.addAll(AbstractParameters.CASE_INSENSITIVE_PARAMETER_NAMES);
     CASE_INSENSITIVE_PARAMETER_NAMES = Collections.unmodifiableSortedSet(validParameterNames);
   }
   protected Integer _reviewId;
-  protected boolean _dryRun;
-  protected boolean _stopOngoingExecution;
-  protected String _reason;
   protected TopicReplicationFactorChangeParameters _topicReplicationFactorChangeParameters;
   protected Map<String, ?> _configs;
 
@@ -83,18 +73,12 @@ public class TopicConfigurationParameters extends GoalBasedOptimizationParameter
     super.initParameters();
     boolean twoStepVerificationEnabled = _config.getBoolean(WebServerConfig.TWO_STEP_VERIFICATION_ENABLED_CONFIG);
     _reviewId = ParameterUtils.reviewId(_request, twoStepVerificationEnabled);
-    _dryRun = ParameterUtils.getDryRun(_request);
-    boolean requestReasonRequired = _config.getBoolean(ExecutorConfig.REQUEST_REASON_REQUIRED_CONFIG);
-    _reason = ParameterUtils.reason(_request, requestReasonRequired && !_dryRun);
-    _stopOngoingExecution = ParameterUtils.stopOngoingExecution(_request);
-    if (_stopOngoingExecution && _dryRun) {
-      throw new UserRequestException(String.format("%s and %s cannot both be set to true.", STOP_ONGOING_EXECUTION_PARAM, DRY_RUN_PARAM));
-    }
     _topicReplicationFactorChangeParameters = maybeBuildTopicReplicationFactorChangeParameters(_configs);
     if (areAllParametersNull(_topicReplicationFactorChangeParameters)) {
       throw new UserRequestException("Nothing executable found in request.");
     }
   }
+
 
   @Override
   public void setReviewId(int reviewId) {
@@ -103,18 +87,6 @@ public class TopicConfigurationParameters extends GoalBasedOptimizationParameter
 
   public Integer reviewId() {
     return _reviewId;
-  }
-
-  public boolean dryRun() {
-    return _dryRun;
-  }
-
-  public boolean stopOngoingExecution() {
-    return _stopOngoingExecution;
-  }
-
-  public String reason() {
-    return _reason;
   }
 
   @Override
