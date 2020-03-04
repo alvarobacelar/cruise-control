@@ -7,9 +7,7 @@
 *.ipr
 *.iws
 out/
-*/bin/
 .reviewboardrc
 logs
 *~
-target/
 access.log
